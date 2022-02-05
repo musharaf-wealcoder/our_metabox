@@ -18,14 +18,45 @@ class OurMetabox{
     add_action('save_post', array($this, 'omb_metabox_data_save'));
   }
 
+  private function is_secure($nonce_name, $omb_action, $post_id){
+
+    $nonce = isset($_POST[$nonce_name]) ? $_POST[$nonce_name] : '';
+    if($nonce == ''){
+      return false;
+    }
+ 
+ 
+     if(!wp_verify_nonce($nonce,  $omb_action))
+     {
+       return false;
+     }
+ 
+     if(!current_user_can('edit_post', $post_id))
+     {
+       return false;
+     }
+ 
+     if(wp_is_post_autosave( $post_id ))
+     {
+       return false;
+     }
+ 
+     if(wp_is_post_revision( $post_id ))
+     {
+       return false;
+     }
+ 
+  }
+
+
   public function omb_metabox_data_save($post_id)
   {
-    $location = isset($_POST['omb_input_name']) ? $_POST['omb_input_name'] : '';
 
-    if($location == "")
-    {
+    if(!$this->is_secure('omb_nonce_field', 'omb_nonce_action', $post_id)){
       return $post_id;
     }
+
+    $location = isset($_POST['omb_input_name']) ? $_POST['omb_input_name'] : '';
 
     add_post_meta($post_id, 'omb_input_name', $location);
 
@@ -44,26 +75,28 @@ class OurMetabox{
 
   
 
-  public function omb_create_meta_box($post)
+  public function omb_display_meta_box($post)
   {
 
     $location = get_post_meta($post->ID, 'omb_metabox_id', true );
+    $country = get_post_meta($post->ID, 'omb_country_name', true );
+
+    $label = __('Location', 'omb');
+    $label1 = __('Country', 'omb');
+    wp_nonce_field('omb_nonce_action', 'omb_nonce_field');
+
     $metabox_form = <<<EOD
       <div>
-        <label> Type Your Location </label>
+        <label for="">{$label}</label>
         <input type="text" class="regular-text" name="omb_input_name"  value="{$location}" />
       </div>
 
+      <div>
+        <label for="omb_country">{$label1}</label>
+        <input type="text" class="regular-text" name="omb_country_name" id="omb_country"  value="{$country}" />
+      </div>
 
-    <style>
 
-      div label{
-
-        display:block;
-      
-      }
-
-    </style>
     EOD;
 
     echo $metabox_form;
@@ -74,6 +107,7 @@ class OurMetabox{
   {
     load_plugin_textdomain('omb', false, plugin_dir_url(__FILE__). "/language");
   }
+
 
 
 
