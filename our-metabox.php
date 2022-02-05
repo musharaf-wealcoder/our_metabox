@@ -36,12 +36,13 @@ class OurMetabox{
     add_meta_box(
       'omb_metabox_id',
       __('Location track','omb'),
-      array($this, 'omb_create_meta_box'),
+      array($this, 'omb_display_meta_box'),
       'page',
       'normal'
     );
   }
 
+  
 
   public function omb_create_meta_box($post)
   {
